@@ -11,8 +11,8 @@ class MainAgentStructuredOutput(BaseModel):
     can_answer: bool = Field(
         ..., description="Apakah asisten dapat menjawab pertanyaan ini?"
     )
-    the_answer: Optional[str] = Field(
-        None, description="Jawaban dari pertanyaan ini jika asisten dapat menjawab"
+    the_answer: str = Field(
+        ..., description="Jawaban dari pertanyaan ini jika asisten dapat menjawab"
     )
 
 
@@ -70,7 +70,9 @@ class DataStats(BaseModel):
 class AgentState(BaseModel):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     user_query: str
-    columns: Optional[List[ColumnsStructuredOutput]]
-    column_descriptions: Optional[List[ColumnDescriptionStructuredOutput]]
-    data_stats: Optional[DataStats]
-    insights: str
+    columns: Optional[List[ColumnsStructuredOutput]] = None
+    column_descriptions: Optional[List[ColumnDescriptionStructuredOutput]] = None
+    data_stats: Optional[DataStats] = None
+    insight: Optional[str] = None
+    can_answer: Optional[bool] = None
+    the_answer: Optional[str] = None

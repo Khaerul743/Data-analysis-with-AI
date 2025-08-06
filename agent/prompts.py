@@ -5,19 +5,20 @@ class AgentPrompts:
     """prompts for the agent"""
 
     @staticmethod
-    def main_agent(user_query: str) -> list[BaseMessage]:
+    def main_agent() -> list[BaseMessage]:
         """Main agent prompt"""
         return [
             SystemMessage(
                 content=(
                     """
             Kamu adalah asisten yang siap membantu pengguna.
-            Tugas kamu adalah menjawab pertanyaan dari pengguna.
+            Tugas kamu adalah menjawab pertanyaan simple dari pengguna.
             Gunakan bahasa gaul yang santai dan mudah dimengerti.
+            
+            Jika kamu disuruh untuk menganalisis sebuah data, response kamu tidak bisa jawab, dan serahkan tugas itu kepada agent analisis data.          
 """
                 )
-            ),
-            HumanMessage(content=user_query),
+            )
         ]
 
     @staticmethod
