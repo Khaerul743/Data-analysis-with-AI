@@ -73,6 +73,7 @@ class AgentState(BaseModel):
     columns: Optional[List[ColumnsStructuredOutput]] = None
     column_descriptions: Optional[List[ColumnDescriptionStructuredOutput]] = None
     data_stats: Optional[DataStats] = None
+    is_analyis: bool = False
     insight: Optional[str] = None
     can_answer: Optional[bool] = None
     the_answer: Optional[str] = None

@@ -22,9 +22,7 @@ class AgentPrompts:
         ]
 
     @staticmethod
-    def agent_analyst_data(
-        user_query: str, is_analysis: bool, data_description
-    ) -> list[BaseMessage]:
+    def agent_analyst_data(is_analysis: bool, data_description) -> list[BaseMessage]:
         data_description = f"""
         Berikut adalah deskripsi data yang sudah dianalisis:
         {data_description}
@@ -40,8 +38,7 @@ class AgentPrompts:
             {data_description if is_analysis else tools}
 """
                 )
-            ),
-            HumanMessage(content=user_query),
+            )
         ]
 
     @staticmethod

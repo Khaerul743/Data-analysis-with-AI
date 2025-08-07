@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from models import AgentState, MainAgentStructuredOutput
 from prompts import AgentPrompts
+from tools import Tools
 
 load_dotenv()
 
@@ -15,6 +16,7 @@ class Agent:
         self.llm_for_reasoning = ChatOpenAI(model="gpt-4o")
         self.llm_for_explanation = ChatOpenAI(model="gpt-3.5-turbo")
         self.prompts = AgentPrompts()
+        self.tools = Tools()
         self.build = self._build_workflow
 
     def _build_workflow(self):
@@ -34,6 +36,15 @@ class Agent:
         print(response)
         return {"can_answer": response.can_answer, "the_answer": response.the_answer}
 
+    def _main_agent_router(self, state: AgentState) -> str:
+        can_answer = state.can_answer
+        if can_answer:
+            return "yes"
+        return "no"
+
+    # def _agent_analysis_data(self,state:AgentState):
+    #     prompt = self.prompts.agent_analyst_data(state.is_analyis, )
+
     def run(self, query: str):
         workflow = self.build()
         messages = {
@@ -43,6 +54,7 @@ class Agent:
             "column_descriptions": None,
             "data_stats": None,
             "insight": None,
+            "is_analyis": False,
         }
         result = workflow.invoke(messages)
         return result
