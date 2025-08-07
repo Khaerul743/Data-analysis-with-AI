@@ -62,7 +62,35 @@ class AgentPrompts:
             ),
         ]
 
+    @staticmethod
+    def agent_insight_data(data, data_description, data_stats) -> list[BaseMessage]:
+        return [
+            SystemMessage(
+                content="""
+                Kamu adalah seorang Data Scientist yang ahli dalam menemukan insight, pola, dan anomali dari data.
+                Tugas kamu adalah membantu pengguna menyimpulkan insight dari data yang diberikan.
+                Fokus pada interpretasi hasil statistik dan korelasikan dengan deskripsi data.
+                Berikan insight yang mendalam dan jelas.
+                """
+            ),
+            HumanMessage(
+                content=f"""
+                Saya telah menyediakan data, deskripsi, dan hasil analisis statistik.
+                Tolong bantu saya menyimpulkan insight penting dari informasi ini:
+
+                ### Data
+                {data}
+
+                ### Deskripsi Data
+                {data_description}
+
+                ### Hasil Analisis Statistik
+                {data_stats}
+                """
+            ),
+        ]
+
 
 if __name__ == "__main__":
     prompt = AgentPrompts()
-    print(prompt.agent_analyst_data(False, "kontol"))
+    print(prompt.agent_analyst_data(False, "woi"))

@@ -1,7 +1,9 @@
 from typing import Any, Dict
 
 from dotenv import load_dotenv
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
@@ -9,6 +11,7 @@ from models import (
     AgentState,
     Columns,
     ColumnsStructuredOutput,
+    DataStats1StructuredOutput,
     MainAgentStructuredOutput,
 )
 from prompts import AgentPrompts
@@ -96,9 +99,9 @@ messages_result = {
             column_description="Kategori dari transaksi, seperti makanan, transportasi, lainnya, dan keperluan pribadi",
         ),
     ],
-    "data_stats": None,
-    "is_analyis": False,
-    "insight": None,
+    "data_stats": "Berdasarkan analisis dari data transaksi tersebut, ditemukan bahwa:\n\n- Rata-rata transaksi (mean) adalah sekitar 41,571.43.\n- Nilai tengah (median) transaksi adalah 39,500.\n- Modus atau nilai yang paling sering muncul dalam data adalah 12,000.\n- Penyebaran data (standar deviasi) sebesar 20,240.39, menunjukkan variasi atau deviasi dari rata-rata.\n- Varian dari data adalah 409,673,469.39.\n- Nilai maksimum dari transaksi adalah 100,000, sedangkan nilai minimum adalah 12,000.\n- Jangkauan dari data transaksi ini adalah 88,000.\n- Distribusi data ini tidak terdistribusi secara normal, yang berarti data cenderung tidak simetris atau memiliki kurtosis yang jauh dari distribusi normal.\n\nData ini meliputi berbagai kategori seperti makanan, transportasi, dan keperluan pribadi yang memberikan gambaran umum tentang pengeluaran pada periode tersebut.",
+    "is_analyis": True,
+    "insight": "Dari data, deskripsi, dan hasil analisis statistik yang telah disediakan, terdapat beberapa insight penting yang dapat disimpulkan:\n\n1. **Pola Pengeluaran:**\n    - Mayoritas transaksi terjadi pada kategori makanan, diikuti oleh keperluan pribadi dan transportasi. Hal ini menunjukkan bahwa pengeluaran terbanyak pada periode tersebut adalah untuk makanan, yang kemungkinan merupakan kebutuhan sehari-hari.\n  \n2. **Rata-rata dan Distribusi Data:**\n    - Rata-rata transaksi sebesar 41,571.43 dengan nilai tengah 39,500. Data memiliki standar deviasi yang cukup tinggi sebesar 20,240.39, menunjukkan variasi yang signifikan dari rata-rata. Hal ini mengindikasikan adanya variasi pengeluaran yang cukup besar di dalam setiap kategori transaksi.\n\n3. **Modus dan Nilai Ekstrem:**\n    - Nilai yang paling sering muncul dalam data adalah 12,000, sedangkan nilai transaksi maksimum mencapai 100,000 dan minimum adalah 12,000. Terdapat perbedaan yang cukup jauh antara nilai transaksi maksimum dan minimum, menunjukkan variasi yang signifikan dari transaksi tertinggi hingga terendah.\n\n4. **Kesimpulan Distribusi Data:**\n    - Distribusi data tidak terdistribusi secara normal, menandakan bahwa data cenderung tidak simetris atau memiliki kurtosis yang jauh dari distribusi normal. Hal ini menunjukkan bahwa ada potensi adanya anomali atau pola pengeluaran yang tidak terduga dalam dataset tersebut.\n\nDengan demikian, insight-insight di atas dapat memberikan pemahaman yang lebih mendalam tentang pola pengeluaran, distribusi data, dan karakteristik transaksi keuangan pada periode yang diberikan. Ini dapat menjadi pijakan untuk analisis lebih lanjut atau pengambilan keputusan terkait pengeluaran di masa depan.",
     "can_answer": False,
 }
 
@@ -118,6 +121,8 @@ class Agent:
         graph.add_node("get_data", ToolNode(tools=[self.tools.get_data]))
         graph.add_node("save_tool_message", self._save_tool_message)
         graph.add_node("agent_data_desc", self._agent_data_description)
+        graph.add_node("analysis_data", self._agent_analysis)
+        graph.add_node("agent_insight", self.agent_data_insight)
 
         # graph.add_edge(START, "main_agent")
         # graph.add_conditional_edges(
@@ -130,8 +135,12 @@ class Agent:
         # )
         # graph.add_edge("get_data", "save_tool_message")
         # graph.add_edge("save_tool_message", END)
-        graph.add_edge(START, "agent_data_desc")
-        graph.add_edge("agent_data_desc", END)
+        # graph.add_edge(START, "agent_data_desc")
+        # graph.add_edge("agent_data_desc", END)
+
+        graph.add_edge(START, "analysis_data")
+        graph.add_edge("analysis_data", "agent_insight")
+        graph.add_edge("agent_insight", END)
         return graph.compile()
 
     def _main_agent(self, state: AgentState) -> Dict[str, Any]:
@@ -182,6 +191,41 @@ class Agent:
             "data_description": response.data_description,
             "column_description": response.columns,
         }
+
+    def _agent_analysis(self, state: AgentState):
+        analysisMean = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "Kamu adalah seorang data analisis profesional yang memiliki pengalaman dalam menganalisis data.\nTugas kamu adalah membantu pengguna untuk menganalisis data yang telah mereka diberikan.\nUntuk output cukup berupa deskripsi dari data tersebut, kamu tidak perlu memberikan pertanyaan tambahan kepada pengguna.",
+                ),
+                (
+                    "human",
+                    "Tolong analisis data tersebut dengan benar. Berikut adalah detail dari data:\n- Data:\n{data}\n\n-Deskripsi dari data tersebut:\n{data_description}",
+                ),
+                ("placeholder", "{agent_scratchpad}"),
+            ]
+        )
+        llm = self.llm_for_reasoning
+        tools = [self.tools.analize_data]
+        tool_calling = create_tool_calling_agent(
+            llm=llm, tools=tools, prompt=analysisMean
+        )
+        executor_tool = AgentExecutor(agent=tool_calling, tools=tools, verbose=True)
+        result = executor_tool.invoke(
+            {"data": state.data, "data_description": state.data_description}
+        )
+        print(f"result================{result}")
+        return {"data_stats": result["output"], "is_analyis": True}
+
+    def agent_data_insight(self, state: AgentState):
+        prompt = self.prompts.agent_insight_data(
+            state.data, state.data_description, state.data_stats
+        )
+        llm = self.llm_for_explanation
+        response = llm.invoke(prompt)
+
+        return {"insight": response.content}
 
     def run(self, query: str):
         workflow = self.build()

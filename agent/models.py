@@ -74,7 +74,7 @@ class AgentState(BaseModel):
     data: Optional[str] = None
     data_description: Optional[str] = None
     column_description: Optional[list[Columns]] = None
-    data_stats: Optional[DataStats] = None
+    data_stats: Optional[str] = None
     is_analyis: bool = False
     insight: Optional[str] = None
     can_answer: Optional[bool] = None
