@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, List, Optional, Sequence, Union
+from typing import Annotated, Any, Dict, List, Optional, Sequence
 
 from langchain_core.messages import BaseMessage
 from langgraph.graph import add_messages
@@ -17,7 +17,8 @@ class MainAgentStructuredOutput(BaseModel):
 
 
 class Columns(BaseModel):
-    name: str = Field(..., description="Nama kolom dari tabel tersebut")
+    column_name: str = Field(..., description="Nama kolom dari tabel tersebut")
+    column_description: str = Field(..., description="Deskripsi dari kolom tersebut")
 
 
 class ColumnsStructuredOutput(BaseModel):
@@ -31,17 +32,17 @@ class ColumnsStructuredOutput(BaseModel):
     )
 
 
-class ColumnDescription(BaseModel):
-    Column_name: str = Field(..., description="Nama kolom")
-    Description: str = Field(..., description="Deskripsi dari kolom tersebut")
+# class ColumnDescription(BaseModel):
+#     Column_name: str = Field(..., description="Nama kolom")
+#     Description: str = Field(..., description="Deskripsi dari kolom tersebut")
 
 
-class ColumnDescriptionStructuredOutput(BaseModel):
-    """Deskripsi kolom tabel"""
+# class ColumnDescriptionStructuredOutput(BaseModel):
+#     """Deskripsi kolom tabel"""
 
-    column_descriptions: List[ColumnDescription] = Field(
-        ..., description="List dari deskripsi kolom dari tabel tersebut"
-    )
+#     column_descriptions: List[ColumnDescription] = Field(
+#         ..., description="List dari deskripsi kolom dari tabel tersebut"
+#     )
 
 
 class DataStats1StructuredOutput(BaseModel):
@@ -70,8 +71,9 @@ class DataStats(BaseModel):
 class AgentState(BaseModel):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     user_query: str
-    columns: Optional[List[ColumnsStructuredOutput]] = None
-    column_descriptions: Optional[List[ColumnDescriptionStructuredOutput]] = None
+    data: Optional[str] = None
+    data_description: Optional[str] = None
+    column_description: Optional[list[Columns]] = None
     data_stats: Optional[DataStats] = None
     is_analyis: bool = False
     insight: Optional[str] = None

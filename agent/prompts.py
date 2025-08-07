@@ -61,3 +61,8 @@ class AgentPrompts:
 """
             ),
         ]
+
+
+if __name__ == "__main__":
+    prompt = AgentPrompts()
+    print(prompt.agent_analyst_data(False, "kontol"))

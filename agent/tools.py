@@ -1,14 +1,14 @@
+from langchain_core.tools import tool
 from utils.data_format import beauty_output
 
 
 class Tools:
-    def __init__(self):
-        pass
-
-    def get_data(self, path: str):
+    @staticmethod
+    @tool
+    def get_data():
         """Gunakan ini jika kamu ingin mengambil data dari user"""
         try:
-            data = beauty_output(path)
+            data = beauty_output("../data/pengeluaran.csv")
         except Exception as e:
             print(f"Terjadi kesalahan ketika agent memakai tool: {e}")
             return "Terjadi kesalahan saat mengambil data."
@@ -17,4 +17,4 @@ class Tools:
 
 if __name__ == "__main__":
     tool = Tools()
-    print(tool.get_data("../data/pengeluaran.csv"))
+    print(tool.get_data())
