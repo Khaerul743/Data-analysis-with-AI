@@ -72,6 +72,7 @@ class AgentState(BaseModel):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     user_query: str
     data: Optional[str] = None
+    data_classification: Optional[str] = None
     data_description: Optional[str] = None
     column_description: Optional[list[Columns]] = None
     data_stats: Optional[str] = None

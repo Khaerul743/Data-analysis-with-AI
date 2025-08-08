@@ -1,4 +1,5 @@
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from utils.data_format import data_context_format
 
 
 class AgentPrompts:
@@ -23,19 +24,19 @@ class AgentPrompts:
 
     @staticmethod
     def agent_analyst_data(is_analysis: bool, data_description) -> list[BaseMessage]:
-        data_description = f"""
-        Berikut adalah deskripsi data yang sudah dianalisis:
-        {data_description}
+        data_desc = f"""
+Berikut adalah deskripsi data yang sudah dianalisis:
+{data_context_format(data_description)}
 """
         tools = "Jika user meminta analisis data, gunakan tools yang sesuai untuk melakukan analisis tersebut."
         return [
             SystemMessage(
                 content=(
                     f"""
-            Kamu adalah seorang data analyst profesional dengan pengalaman luas dalam analisis data.
-            Tugas kamu adalah membantu pengguna dalam menganalisis data, menjawab pertanyaan terkait data yang disediakan.
-            Berperilakulah seperti seorang data analyst profesional.
-            {data_description if is_analysis else tools}
+Kamu adalah seorang data analyst profesional dengan pengalaman luas dalam analisis data.
+Tugas kamu adalah membantu pengguna dalam menganalisis data, menjawab pertanyaan terkait data yang disediakan.
+Berperilakulah seperti seorang data analyst profesional.
+{data_desc if is_analysis else tools}
 """
                 )
             )
@@ -89,6 +90,48 @@ class AgentPrompts:
                 """
             ),
         ]
+
+    @staticmethod
+    def agent_classification(data: str) -> str:
+        return f"""
+        Anda adalah AI agent yang bertugas mengklasifikasi data pengeluaran berdasarkan kriteria berikut:
+
+        **KRITERIA KLASIFIKASI:**
+        - Jika pengeluaran > 50,000 → klasifikasikan sebagai "BOROS"
+        - Jika pengeluaran ≤ 50,000 → klasifikasikan sebagai "NORMAL"
+
+        **TUGAS ANDA:**
+        1. Analisis setiap baris data pengeluaran
+        2. Terapkan kriteria klasifikasi pada kolom "jumlah"
+        3. Tambahkan kolom baru bernama "keterangan" dengan hasil klasifikasi
+        4. Output hasil dalam format string table yang rapi dengan semua kolom dan baris
+
+        **FORMAT OUTPUT YANG DIINGINKAN:**
+        - String table dengan border ASCII
+        - Kolom: tanggal | jumlah | kategori | keterangan
+        - Semua baris data harus ditampilkan
+        - Format angka dengan pemisah ribuan (gunakan koma atau titik)
+        - Alignment yang rapi untuk setiap kolom
+
+        **CONTOH FORMAT OUTPUT:**
+        +------------+----------+-----------------+-----------+
+        |  tanggal   |  jumlah  |    kategori     |keterangan |
+        +------------+----------+-----------------+-----------+
+        |2025-01-01  | 12,000   | makanan         | NORMAL    |
+        |2025-01-01  | 15,000   | makanan         | NORMAL    |
+        |2025-01-02  | 60,000   | transportasi    | BOROS     |
+        |2025-01-02  | 33,000   | makanan         | NORMAL    |
+        +------------+----------+-----------------+-----------+
+
+        **INSTRUKSI TAMBAHAN:**
+        - Pastikan semua baris data diproses
+        - Gunakan format tabel yang konsisten
+        - Berikan ringkasan di akhir: total transaksi BOROS vs NORMAL
+        - Jika ada kesalahan dalam data, laporkan dan tetap lanjutkan proses
+
+        **BERIKUT ADALAH DATA YANG HARUS ANDA KLASIFIKASIKAN**
+        {data}
+        """
 
 
 if __name__ == "__main__":
